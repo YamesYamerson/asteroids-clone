@@ -3,16 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Asteroids Clone</title>
-    <style>
-        canvas { 
-            display: block;
-            background: black;
-            margin: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="game-outer-frame">
+        <div id="controlPanel">
+            <h1 id="gameTitle">Asteroids</h1>
+
+            <button id="startButton" class="button top-button">Start</button>
+            <button id="pauseButton" class="button top-button">Pause</button>
+            <button id="optionsButton" class="button top-button">Options</button>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="mobileControls">
+            <button id="leftButton" class="button dir-controls">Left</button>
+            <button id="rightButton" class="button dir-controls">Right</button>
+            <button id="thrustButton" class="button dir-controls">Thrust</button>
+            <button id="shootButton" class="button dir-controls">Shoot</button>
+        </div>
+    </div>
     <script src="scripts.js"></script>
 </body>
 </html>
