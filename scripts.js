@@ -120,11 +120,84 @@ class Bullet {
     }
 }
 
+// Existing Ship and Bullet classes ...
+
+let gameRunning = false;
 const ship = new Ship(canvas.width / 2, canvas.height / 2);
 
-let lastTime = 0;
+function startGame() {
+    if (!gameRunning) {
+        gameRunning = true;
+        requestAnimationFrame(gameLoop);
+    }
+}
 
+function toggleGame() {
+    gameRunning = !gameRunning;
+    if (gameRunning) {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+document.getElementById('startButton').addEventListener('click', startGame);
+document.getElementById('pauseButton').addEventListener('click', toggleGame);
+
+function handleRotateLeftStart(event) {
+    event.preventDefault();
+    ship.rotate(-1);
+}
+
+function handleRotateLeftEnd(event) {
+    event.preventDefault();
+    ship.rotate(0); // Assuming your rotate method can handle 0 to stop rotation
+}
+
+function handleRotateRightStart(event) {
+    event.preventDefault();
+    ship.rotate(1);
+}
+
+function handleRotateRightEnd(event) {
+    event.preventDefault();
+    ship.rotate(0); // Stop rotating when the interaction ends
+}
+
+function handleThrustStart(event) {
+    event.preventDefault();
+    ship.controlThrust(true);
+}
+
+function handleThrustEnd(event) {
+    event.preventDefault();
+    ship.controlThrust(false);
+}
+
+function handleShoot(event) {
+    event.preventDefault();
+    ship.shoot();
+}
+
+// Adding event listeners for both touch and click
+document.getElementById('leftButton').addEventListener('touchstart', handleRotateLeftStart);
+document.getElementById('leftButton').addEventListener('touchend', handleRotateLeftEnd);
+document.getElementById('leftButton').addEventListener('mousedown', handleRotateLeftStart);
+document.getElementById('leftButton').addEventListener('mouseup', handleRotateLeftEnd);
+
+document.getElementById('rightButton').addEventListener('touchstart', handleRotateRightStart);
+document.getElementById('rightButton').addEventListener('touchend', handleRotateRightEnd);
+document.getElementById('rightButton').addEventListener('mousedown', handleRotateRightStart);
+document.getElementById('rightButton').addEventListener('mouseup', handleRotateRightEnd);
+
+document.getElementById('thrustButton').addEventListener('touchstart', handleThrustStart);
+document.getElementById('thrustButton').addEventListener('touchend', handleThrustEnd);
+document.getElementById('thrustButton').addEventListener('mousedown', handleThrustStart);
+document.getElementById('thrustButton').addEventListener('mouseup', handleThrustEnd);
+
+document.getElementById('shootButton').addEventListener('touchstart', handleShoot);
+document.getElementById('shootButton').addEventListener('mousedown', handleShoot);
 function gameLoop(timestamp) {
+    if (!gameRunning) return;
+
     let deltaTime = timestamp - lastTime;
     lastTime = timestamp;
 
@@ -133,9 +206,15 @@ function gameLoop(timestamp) {
     ship.updateBullets();
     ship.draw();
     ship.bullets.forEach(bullet => bullet.draw());
-    requestAnimationFrame(gameLoop);
+    
+    if (gameRunning) {
+        requestAnimationFrame(gameLoop);
+    }
 }
 
+let lastTime = 0;
+
+// Existing event listeners for keyboard controls ...
 gameLoop(0);
 
 document.addEventListener('keydown', (e) => {
