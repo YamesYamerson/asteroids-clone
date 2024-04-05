@@ -9,6 +9,7 @@ class Ship {
         this.velocity = { x: 0, y: 0 };
         this.thrust = false;
         this.thrustPower = 0.1;
+        this.bullets = [];
     }
 
     draw() {
@@ -16,9 +17,9 @@ class Ship {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
         ctx.beginPath();
-        ctx.moveTo(-10, 10);
-        ctx.lineTo(10, 0);
-        ctx.lineTo(-10, -10);
+        ctx.moveTo(-10, 10); // Left corner
+        ctx.lineTo(10, 0); // Nose of the ship
+        ctx.lineTo(-10, -10); // Right corner
         ctx.closePath();
         ctx.strokeStyle = 'white';
         ctx.stroke();
@@ -27,7 +28,6 @@ class Ship {
             ctx.beginPath();
             ctx.moveTo(-10, 0);
             ctx.lineTo(-15, -5);
-            ctx.lineTo(-10, 0);
             ctx.lineTo(-15, 5);
             ctx.closePath();
             ctx.strokeStyle = 'red';
@@ -38,19 +38,19 @@ class Ship {
     }
 
     update() {
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
-
         if (this.thrust) {
             this.velocity.x += Math.cos(this.angle) * this.thrustPower;
             this.velocity.y += Math.sin(this.angle) * this.thrustPower;
         }
 
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+
         this.wrapAround();
     }
 
     rotate(dir) {
-        const rotateSpeed = 0.1; // Adjust as needed
+        const rotateSpeed = 0.1; // Rotation speed
         this.angle += dir * rotateSpeed;
     }
 
@@ -58,27 +58,55 @@ class Ship {
         this.thrust = isThrusting;
     }
 
-    wrapAround() {
-        if (this.x > canvas.width) {
-            this.x = 0;
-        } else if (this.x < 0) {
-            this.x = canvas.width;
-        }
+    shoot() {
+        const bullet = new Bullet(this.x, this.y, this.angle);
+        this.bullets.push(bullet);
+    }
 
-        if (this.y > canvas.height) {
-            this.y = 0;
-        } else if (this.y < 0) {
-            this.y = canvas.height;
-        }
+    updateBullets() {
+        this.bullets.forEach((bullet, index) => {
+            bullet.update();
+            if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                this.bullets.splice(index, 1);
+            }
+        });
+    }
+
+    wrapAround() {
+        if (this.x > canvas.width) this.x = 0;
+        else if (this.x < 0) this.x = canvas.width;
+
+        if (this.y > canvas.height) this.y = 0;
+        else if (this.y < 0) this.y = canvas.height;
     }
 }
 
+class Bullet {
+    constructor(x, y, angle) {
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.speed = 5;
+        this.radius = 2;
+    }
+
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+    }
+
+    draw() {
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+        ctx.fill();
+    }
+}
 
 const ship = new Ship(canvas.width / 2, canvas.height / 2);
 
-// Event listeners for ship control
 document.addEventListener('keydown', (e) => {
-    switch (e.code) {
+    switch (e.key) {
         case 'ArrowLeft':
             ship.rotate(-1);
             break;
@@ -88,20 +116,24 @@ document.addEventListener('keydown', (e) => {
         case 'ArrowUp':
             ship.controlThrust(true);
             break;
+        case ' ':
+            ship.shoot();
+            break;
     }
 });
 
 document.addEventListener('keyup', (e) => {
-    if (e.code === 'ArrowUp') {
+    if (e.key === 'ArrowUp') {
         ship.controlThrust(false);
     }
 });
 
-// Main game loop remains unchanged
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ship.update();
+    ship.updateBullets();
     ship.draw();
+    ship.bullets.forEach(bullet => bullet.draw());
     requestAnimationFrame(gameLoop);
 }
 
