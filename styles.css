@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+html, body {
+    margin: 0;
+    padding: 0;
+    /* height: 100%; Full height of the content */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+body {
+    font-family: 'VT323', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center the content vertically */
+    min-height: 100vh; /* Full viewport height */
+    background-color: #000; /* Optional: Set background color to match the game theme */
+}
+
+#game-outer-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Align content to the top */
+    background-color: #333;
+    color: white;
+    border-radius: 5px;
+    padding: 10px;
+    width: 820px; /* Adjust based on your canvas size + some margin */
+    max-width: 100vw; /* Ensure it doesn't exceed the viewport width */
+    margin: 20px 0; /* Add some margin at the top and bottom */
+}
+
+canvas { 
+    background: black;
+    margin: 10px 0; /* Add some margin to top and bottom */
+}
+
+#controlPanel {
+    text-align: center;
+    margin-bottom: 10px; /* Add margin to bottom */
+}
+
+#mobileControls {
+    text-align: center;
+    padding: 10px 0; /* Add padding to top and bottom */
+}
+
+.top-button, .dir-controls {
+    font-family: 'VT323', monospace;
+    width: 100px;
+    height: 35px;
+    background-color: rgb(120, 120, 112);
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin: 5px; /* Add margin for spacing */
+}
