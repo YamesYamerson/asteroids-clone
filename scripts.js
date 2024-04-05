@@ -103,7 +103,7 @@ class Bullet {
         this.x = x;
         this.y = y;
         this.angle = angle;
-        this.speed = 5; // Speed of the bullet
+        this.speed = 6; // Speed of the bullet
         this.radius = 2;
     }
 
