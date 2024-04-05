@@ -9,7 +9,10 @@ class Ship {
         this.velocity = { x: 0, y: 0 };
         this.thrust = false;
         this.thrustPower = 0.1;
+        this.maxSpeed = 5; // Limit the top speed of the ship
         this.bullets = [];
+        this.fireCooldown = 500; // Time in milliseconds between shots
+        this.fireCooldownTimer = 0; // Time since last shot
     }
 
     draw() {
@@ -37,16 +40,27 @@ class Ship {
         ctx.restore();
     }
 
-    update() {
+    update(deltaTime) {
         if (this.thrust) {
             this.velocity.x += Math.cos(this.angle) * this.thrustPower;
             this.velocity.y += Math.sin(this.angle) * this.thrustPower;
+
+            // Cap the velocity to the max speed
+            let speed = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+            if (speed > this.maxSpeed) {
+                this.velocity.x *= this.maxSpeed / speed;
+                this.velocity.y *= this.maxSpeed / speed;
+            }
         }
 
         this.x += this.velocity.x;
         this.y += this.velocity.y;
 
         this.wrapAround();
+
+        if (this.fireCooldownTimer > 0) {
+            this.fireCooldownTimer -= deltaTime;
+        }
     }
 
     rotate(dir) {
@@ -59,8 +73,11 @@ class Ship {
     }
 
     shoot() {
-        const bullet = new Bullet(this.x, this.y, this.angle);
-        this.bullets.push(bullet);
+        if (this.fireCooldownTimer <= 0) {
+            const bullet = new Bullet(this.x, this.y, this.angle);
+            this.bullets.push(bullet);
+            this.fireCooldownTimer = this.fireCooldown;
+        }
     }
 
     updateBullets() {
@@ -86,7 +103,7 @@ class Bullet {
         this.x = x;
         this.y = y;
         this.angle = angle;
-        this.speed = 5;
+        this.speed = 5; // Speed of the bullet
         this.radius = 2;
     }
 
@@ -104,6 +121,22 @@ class Bullet {
 }
 
 const ship = new Ship(canvas.width / 2, canvas.height / 2);
+
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+    let deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ship.update(deltaTime);
+    ship.updateBullets();
+    ship.draw();
+    ship.bullets.forEach(bullet => bullet.draw());
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop(0);
 
 document.addEventListener('keydown', (e) => {
     switch (e.key) {
@@ -127,14 +160,3 @@ document.addEventListener('keyup', (e) => {
         ship.controlThrust(false);
     }
 });
-
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ship.update();
-    ship.updateBullets();
-    ship.draw();
-    ship.bullets.forEach(bullet => bullet.draw());
-    requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
