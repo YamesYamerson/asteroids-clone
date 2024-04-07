@@ -1,12 +1,25 @@
+// Constants for the canvas and scaling
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const originalWidth = 640; // 10% smaller than 800
 const originalHeight = 480; // 10% smaller than 600
-
 let scaleFactorX = canvas.width / originalWidth;
 let scaleFactorY = canvas.height / originalHeight;
+// Constants for asteroid sizes and points
+const ASTEROID_SIZES = {
+    LARGE: 40,
+    MEDIUM: 20,
+    SMALL: 10
+};
+const asteroidPoints = {
+    LARGE: 20,
+    MEDIUM: 50,
+    SMALL: 100
+};
+let asteroids = [];
+let score = 0;
 
-
+// Function to resize the canvas and maintain aspect ratio
 function resizeCanvas() {
     const maxWidth = 640;  // Define the maximum width
     const maxHeight = 480; // Define the maximum height
@@ -47,19 +60,7 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Define the Ship class
 class Ship {
     constructor(x, y) {
         this.x = x;
@@ -72,6 +73,7 @@ class Ship {
         this.bullets = [];
         this.fireCooldown = 500;
         this.fireCooldownTimer = 0;
+        this.size = 10; // Assuming the ship is a circle with a radius of 10
     }
 
     draw() {
@@ -120,24 +122,24 @@ class Ship {
                 this.velocity.y *= this.maxSpeed / speed;
             }
         }
-
+        // Update the ship's position based on its velocity
         this.x = (this.x + this.velocity.x) % (canvas.width / scaleFactorX);
         this.y = (this.y + this.velocity.y) % (canvas.height / scaleFactorY);
-
+        // Wrap around the game area
         this.wrapAround();
         this.fireCooldownTimer -= deltaTime;
         
     }
-
+    // Add the rotate method to the Ship class
     rotate(dir) {
         const rotateSpeed = 0.1;
         this.angle += dir * rotateSpeed;
     }
-
+    // Add the controlThrust method to the Ship class
     controlThrust(isThrusting) {
         this.thrust = isThrusting;
     }
-
+    // Add the shoot method to the Ship class
     shoot() {
         if (this.fireCooldownTimer <= 0) {
             const bullet = new Bullet(this.x, this.y, this.angle);
@@ -200,6 +202,56 @@ class Bullet {
         ctx.restore();
     }
 }
+
+
+class Asteroid {
+    constructor(x, y, size) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.velocity = {
+            x: Math.random() * 2 - 1,
+            y: Math.random() * 2 - 1
+        };
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.strokeStyle = 'white';  // Ensure this color is visible
+        ctx.fillStyle = 'white';  // Ensure this color is visible
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+
+        // Wrap around logic for the asteroid
+        this.x = (this.x + originalWidth) % originalWidth;
+        this.y = (this.y + originalHeight) % originalHeight;
+    }
+
+    breakApart() {
+        const smallerAsteroids = [];
+        if (this.size === ASTEROID_SIZES.LARGE) {
+            smallerAsteroids.push(new Asteroid(this.x, this.y, ASTEROID_SIZES.MEDIUM));
+            smallerAsteroids.push(new Asteroid(this.x, this.y, ASTEROID_SIZES.MEDIUM));
+        } else if (this.size === ASTEROID_SIZES.MEDIUM) {
+            smallerAsteroids.push(new Asteroid(this.x, this.y, ASTEROID_SIZES.SMALL));
+            smallerAsteroids.push(new Asteroid(this.x, this.y, ASTEROID_SIZES.SMALL));
+        }
+        return smallerAsteroids;
+    }
+}
+
+
+
+
+
 // Assuming the Ship and Bullet classes are already defined above
 
 function handleRotateLeftStart(event) {
@@ -236,6 +288,127 @@ function handleShoot(event) {
     event.preventDefault();
     ship.shoot();
 }
+
+function checkCollision(asteroid, bullet) {
+    const asteroidSize = getAsteroidSize(asteroid);
+    console.log(`Asteroid size: ${asteroidSize}, points: ${asteroidPoints[asteroidSize]}`);
+    console.log(`New score: ${score}`);
+    const dx = asteroid.x - bullet.x;
+    const dy = asteroid.y - bullet.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < asteroid.size + bullet.radius; // Simple circular collision detection
+}
+
+function getAsteroidSize(asteroid) {
+    if (asteroid.size >= 30) return 'LARGE'; // Example size thresholds
+    if (asteroid.size >= 15) return 'MEDIUM';
+    return 'SMALL';
+}
+
+function updateAsteroids(deltaTime) {
+    for (let i = 0; i < asteroids.length; i++) {
+        const asteroid = asteroids[i];
+        asteroid.update(deltaTime);
+        asteroid.draw();
+
+        for (let j = 0; j < ship.bullets.length; j++) {
+            const bullet = ship.bullets[j];
+            if (checkCollision(asteroid, bullet)) {
+                // Update the score based on the asteroid's size category
+                const asteroidSize = getAsteroidSize(asteroid);
+                score += asteroidPoints[asteroidSize];
+
+                const smallerAsteroids = asteroid.breakApart();
+                asteroids.splice(i, 1);
+                ship.bullets.splice(j, 1);
+                asteroids = asteroids.concat(smallerAsteroids);
+                break;
+            }
+        }
+    }
+}
+
+
+function checkShipAsteroidCollision(ship, asteroid) {
+    const dx = ship.x - asteroid.x;
+    const dy = ship.y - asteroid.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < ship.size + asteroid.size; // Assuming `size` is a property defining the collision radius
+}
+
+function initializeAsteroids(num) {
+    asteroids = [];  // Assuming asteroids is a global array
+    for (let i = 0; i < num; i++) {
+        asteroids.push(new Asteroid(
+            Math.random() * originalWidth, 
+            Math.random() * originalHeight, 
+            ASTEROID_SIZES.LARGE
+        ));
+    }
+}
+
+function checkShipAsteroidCollisions() {
+    for (let i = 0; i < asteroids.length; i++) {
+        const asteroid = asteroids[i];
+        if (checkShipAsteroidCollision(ship, asteroid)) {
+            handleShipExplosion(ship);
+            const smallerAsteroids = asteroid.breakApart();
+            asteroids.splice(i, 1); // Remove the original asteroid
+            asteroids = asteroids.concat(smallerAsteroids); // Add the smaller asteroids
+            respawnShip(ship); // Respawn the ship after the collision
+            break; // Assuming only one collision is handled per frame
+        }
+    }
+}
+
+function createExplosion(x, y) {
+    const explosionSize = 30; // Maximum size of the explosion
+    let currentSize = 1;
+
+    function animateExplosion() {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        ctx.arc(0, 0, currentSize, 0, Math.PI * 2);
+        ctx.fillStyle = 'orange';
+        ctx.fill();
+        ctx.restore();
+
+        if (currentSize < explosionSize) {
+            currentSize++;
+            requestAnimationFrame(animateExplosion);
+        }
+    }
+
+    animateExplosion();
+}
+
+
+function handleShipExplosion(ship) {
+    console.log("Ship exploded!");
+    createExplosion(ship.x, ship.y);
+    // Consider adding a delay before respawning the ship to allow the explosion effect to show
+    setTimeout(() => {
+    }, 1000); // Wait for the explosion animation to complete
+    respawnShip(ship);
+
+}
+
+
+function respawnShip(ship) {
+    // Place the ship back in the center of the screen
+    ship.x = originalWidth / 2;
+    ship.y = originalHeight / 2;
+    ship.velocity = { x: 0, y: 0 }; // Reset velocity
+}
+
+function drawScore() {
+    ctx.font = '30px VT323';
+    ctx.fillStyle = 'white';
+    ctx.fillText(`Score: ${score}`, 10, 30); // Position the score in the top-left corner
+}
+
+
 
 document.getElementById('leftButton').addEventListener('mousedown', handleRotateLeftStart);
 document.getElementById('leftButton').addEventListener('mouseup', handleRotateLeftEnd);
@@ -304,6 +477,8 @@ const ship = new Ship(originalWidth / 2, originalHeight / 2);
 function startGame() {
     if (!gameRunning) {
         gameRunning = true;
+        initializeAsteroids(5);  // Start with 5 large asteroids, for example
+        lastTime = 0;
         requestAnimationFrame(gameLoop);
     }
 }
@@ -318,7 +493,8 @@ function toggleGame() {
 document.getElementById('startButton').addEventListener('click', startGame);
 document.getElementById('pauseButton').addEventListener('click', toggleGame);
 
-// Control handling...
+
+
 
 let lastTime = 0;
 function gameLoop(timestamp) {
@@ -329,14 +505,20 @@ function gameLoop(timestamp) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ship.update(deltaTime);
-    ship.wrapAround(); // This should be based on logical dimensions, not scaled ones.
-    ship.updateBullets(); // Again, should be logical dimensions.
-    ship.draw();
-    ship.bullets.forEach((bullet) => bullet.draw());
+    // Update and draw asteroids
+    updateAsteroids(deltaTime);
+    checkShipAsteroidCollisions();
 
+    // Update and draw the ship and its bullets
+    ship.update(deltaTime);
+    ship.wrapAround();
+    ship.updateBullets();
+    ship.draw();
+    ship.bullets.forEach(bullet => bullet.draw());
+    drawScore(); // Draw the score on the canvas
     requestAnimationFrame(gameLoop);
 }
+
 
 
 window.addEventListener('resize', resizeCanvas);
