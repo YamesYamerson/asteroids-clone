@@ -3,9 +3,8 @@
 html, body {
     margin: 0;
     padding: 0;
-    /* height: 100%; Full height of the content */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
+
 
 body {
     font-family: 'VT323', monospace;
@@ -14,7 +13,12 @@ body {
     align-items: center;
     justify-content: center; /* Center the content vertically */
     min-height: 100vh; /* Full viewport height */
-    background-color: #000; /* Optional: Set background color to match the game theme */
+    background-color: #333;
+}
+
+#gameTitle{
+    padding: 0;
+    margin: 0;
 }
 
 #game-outer-frame {
@@ -25,20 +29,29 @@ body {
     background-color: #333;
     color: white;
     border-radius: 5px;
-    padding: 10px;
-    width: 820px; /* Adjust based on your canvas size + some margin */
     max-width: 100vw; /* Ensure it doesn't exceed the viewport width */
-    margin: 20px 0; /* Add some margin at the top and bottom */
+    
 }
 
-canvas { 
+canvas {
+    display: block; /* Remove extra space below the canvas */
+    margin: auto; /* Center the canvas horizontally if its container allows */
     background: black;
-    margin: 10px 0; /* Add some margin to top and bottom */
+    border: 0; /* Remove any default border */
+    padding: 0; /* Remove any default padding */
+    
+}
+
+.game-canvas{
+    width: 100%;
+    height: 100%;
+    display: block;
+    margin: 0px;
+    padding: 0px;
 }
 
 #controlPanel {
     text-align: center;
-    margin-bottom: 10px; /* Add margin to bottom */
 }
 
 #mobileControls {
