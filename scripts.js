@@ -18,6 +18,13 @@ const asteroidPoints = {
 };
 let asteroids = [];
 let score = 0;
+// Audio Constants
+const bgMusic = new Audio('audio/chill-asteroids-theme.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.5; // Volume level between 0 and 1
+const shootingSound = new Audio('audio/fire.wav');
+const thrustSound = new Audio('audio/thrust.mp3');
+thrustSound.loop = true; // Enable looping
 
 // Function to resize the canvas and maintain aspect ratio
 function resizeCanvas() {
@@ -144,6 +151,8 @@ class Ship {
         if (this.fireCooldownTimer <= 0) {
             const bullet = new Bullet(this.x, this.y, this.angle);
             this.bullets.push(bullet);
+            shootingSound.currentTime = 0; // Rewind to the start
+            shootingSound.play()
             this.fireCooldownTimer = this.fireCooldown;
         }
     }
@@ -277,11 +286,13 @@ function handleRotateRightEnd(event) {
 function handleThrustStart(event) {
     event.preventDefault();
     ship.controlThrust(true);
+    thrustSound.play(); // Stop thrust sound
 }
 
 function handleThrustEnd(event) {
     event.preventDefault();
     ship.controlThrust(false);
+    thrustSound.pause(); // Stop thrust sound
 }
 
 function handleShoot(event) {
@@ -291,8 +302,6 @@ function handleShoot(event) {
 
 function checkCollision(asteroid, bullet) {
     const asteroidSize = getAsteroidSize(asteroid);
-    console.log(`Asteroid size: ${asteroidSize}, points: ${asteroidPoints[asteroidSize]}`);
-    console.log(`New score: ${score}`);
     const dx = asteroid.x - bullet.x;
     const dy = asteroid.y - bullet.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -477,6 +486,11 @@ const ship = new Ship(originalWidth / 2, originalHeight / 2);
 function startGame() {
     if (!gameRunning) {
         gameRunning = true;
+        bgMusic.play()
+        .catch(e => {
+            console.log("Audio play failed:", e);
+            // Handle the error, show a message to the user, etc.
+        });
         initializeAsteroids(5);  // Start with 5 large asteroids, for example
         lastTime = 0;
         requestAnimationFrame(gameLoop);
@@ -487,6 +501,13 @@ function toggleGame() {
     gameRunning = !gameRunning;
     if (gameRunning) {
         requestAnimationFrame(gameLoop);
+    }
+    if (gameRunning) {
+        // If the game is running, play the music
+        bgMusic.play();
+    } else {
+        // If the game is paused, pause the music
+        bgMusic.pause();
     }
 }
 
